@@ -3,11 +3,11 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE")
+  provider = "postgresql"
+  url      = "postgresql://postgres:@localhost:5432/postgres"
 }
 
-model user  {
+model user {
   user_id Int @id @default(autoincrement())
 
   user_fgcm String?
@@ -17,73 +17,109 @@ model user  {
 
   user_photo String
 
-  user_email String
+  user_email    String
   user_password String
 
-  user_date_created DateTime @default(now())@map("created_at")
+  user_name String
+
+  user_date_created DateTime @default(now()) @map("created_at")
   user_date_updated DateTime @updatedAt @map("updated_at")
- }
+
+  room_user room_user[]
+  notification notification[]
+  event event[]
+
+  report report[]
+}
 
 model document {
-  document_id Int @id @default(autoincrement())
-  document_title String 
-  document_link String
+  document_id          Int    @id @default(autoincrement())
+  document_title       String
+  document_link        String
   document_description String
 
-  document_date_created DateTime @default(now())@map("created_at")
+  document_date_created DateTime @default(now()) @map("created_at")
   document_date_updated DateTime @updatedAt @map("updated_at")
 }
 
 model event {
-  event_id Int @id @default(autoincrement())
-  event_description String
+  event_id           Int      @id @default(autoincrement())
+  event_description  String
   event_initial_date DateTime @default(now())
 
-  event_date_created DateTime @default(now())@map("created_at")
+  event_date_created DateTime @default(now()) @map("created_at")
   event_date_updated DateTime @updatedAt @map("updated_at")
+
+  event_user_id Int?
+  user user? @relation(fields: [event_user_id], references: [user_id])
 }
 
 model report {
-  report_id  Int @id @default(autoincrement())
   report_description String
 
-  report_created DateTime @default(now())@map("created_at")
+  report_created DateTime @default(now()) @map("created_at")
   report_updated DateTime @updatedAt @map("updated_at")
+
+  report_user_id Int
+  report_local_id Int
+
+  user user @relation(fields: [report_user_id], references: [user_id])
+  room local @relation(fields: [report_local_id], references: [local_id])
+
+  @@id([report_user_id, report_local_id])
 }
 
 model local {
-  local_id Int @id @default(autoincrement())
+  local_id   Int    @id @default(autoincrement())
   local_name String
 
-  local_created DateTime @default(now())@map("created_at")
+  local_created DateTime @default(now()) @map("created_at")
   local_updated DateTime @updatedAt @map("updated_at")
+
+  local_room_id Int? @unique()
+  room          room? @relation(fields: [local_room_id], references: [room_id])
+
+  report report[]
 }
 
 model room {
-  room_id Int @id @default(autoincrement())
+  room_id       Int    @id @default(autoincrement())
   room_capacity Int?
-  room_name String
+  room_name     String
 
-  room_created DateTime @default(now())@map("created_at")
+  room_created DateTime @default(now()) @map("created_at")
   room_updated DateTime @updatedAt @map("updated_at")
+  local       local?
+
+  room_user room_user[]
 }
 
 model room_user {
-  ru_id Int @id @default(autoincrement())
+  ru_id           Int   
   ru_initial_date DateTime
-  ru_final_date DateTime
+  ru_final_date   DateTime
 
-  ru_created DateTime @default(now())@map("created_at")
+  ru_created DateTime @default(now()) @map("created_at")
   ru_updated DateTime @updatedAt @map("updated_at")
+
+  ru_user_id Int
+  ru_room_id Int
+
+  user user @relation(fields: [ru_user_id], references: [user_id])
+  room room @relation(fields: [ru_room_id], references: [room_id])
+
+  @@id([ru_user_id, ru_room_id])
 }
 
 model notification {
-  notification_id Int @id @default(autoincrement())
-  notification_title String
+  notification_id          Int    @id @default(autoincrement())
+  notification_title       String
   notification_description String
 
-  notification_created DateTime @default(now())@map("created_at")
+  notification_created DateTime @default(now()) @map("created_at")
   notification_updated DateTime @updatedAt @map("updated_at")
-}
 
+  notification_user_id Int?
+  user user? @relation(fields: [notification_user_id], references: [user_id])
+}
 
